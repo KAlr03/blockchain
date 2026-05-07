@@ -19,44 +19,45 @@ function buildFileUrl(filePath: string): string {
 
 async function exportCertAsPdf(cert: CertificateDto) {
   const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
-  const green = [45, 100, 60] as [number, number, number];
-  const darkGray = [40, 40, 40] as [number, number, number];
-  const lightGray = [245, 245, 245] as [number, number, number];
-  const red = [200, 50, 50] as [number, number, number];
+  const green: [number,number,number]  = [45, 100, 60];
+  const darkGray: [number,number,number] = [40, 40, 40];
+  const lightGray: [number,number,number] = [245, 245, 245];
+  const red: [number,number,number]    = [200, 50, 50];
+  const blue: [number,number,number]   = [20, 80, 160];
 
   // Header bar
   doc.setFillColor(...green);
   doc.rect(0, 0, 210, 22, "F");
   doc.setTextColor(255, 255, 255);
   doc.setFontSize(14); doc.setFont("helvetica", "bold");
-  doc.text("🌿  HALAL SUPPLY CHAIN", 14, 9);
+  doc.text("HALAL SUPPLY CHAIN", 14, 9);
   doc.setFontSize(9); doc.setFont("helvetica", "normal");
   doc.text("Certificate Export Record", 14, 16);
-  doc.text(`Generated: ${new Date().toLocaleString("en-GB")}`, 140, 16);
+  doc.text(`Generated: ${new Date().toLocaleString("en-GB")}`, 120, 16);
 
-  // Title
+  // Title + status badge
   doc.setTextColor(...darkGray);
   doc.setFontSize(18); doc.setFont("helvetica", "bold");
   doc.text("Halal Certificate", 14, 34);
 
-  // Status badge
   const isApproved = cert.status === "APPROVED";
   const isRejected = cert.status === "REJECTED";
-  doc.setFillColor(...(isApproved ? [34, 139, 34] : isRejected ? red : [180, 120, 20]) as [number,number,number]);
+  const badgeColor: [number,number,number] = isApproved ? [34,139,34] : isRejected ? red : [180,120,20];
+  doc.setFillColor(...badgeColor);
   doc.setTextColor(255, 255, 255);
   doc.setFontSize(9); doc.setFont("helvetica", "bold");
   doc.roundedRect(150, 26, 46, 10, 3, 3, "F");
-  doc.text(cert.status.replace("_", " "), 173, 33, { align: "center" });
+  doc.text(cert.status.replace(/_/g, " "), 173, 33, { align: "center" });
 
   // Details table
   const fields = [
     ["Certificate Number", cert.certNumber || "N/A"],
     ["Certificate Type",   cert.certType || "N/A"],
     ["Issuing Authority",  cert.authority || "N/A"],
-    ["Issue Date",         cert.issueDate  ? new Date(cert.issueDate).toLocaleDateString("en-GB")  : "N/A"],
-    ["Expiry Date",        cert.expiryDate ? new Date(cert.expiryDate).toLocaleDateString("en-GB") : "N/A"],
-    ["Approved By",        cert.approvedBy || "Pending"],
-    ["Uploaded",           cert.createdAt  ? new Date(cert.createdAt).toLocaleString("en-GB")      : "N/A"],
+    ["Issue Date",  cert.issueDate  ? new Date(cert.issueDate).toLocaleDateString("en-GB")  : "N/A"],
+    ["Expiry Date", cert.expiryDate ? new Date(cert.expiryDate).toLocaleDateString("en-GB") : "N/A"],
+    ["Approved By", cert.approvedBy || "Pending"],
+    ["Uploaded",    cert.createdAt  ? new Date(cert.createdAt).toLocaleString("en-GB")      : "N/A"],
   ];
 
   let y = 44;
@@ -65,67 +66,99 @@ async function exportCertAsPdf(cert: CertificateDto) {
     doc.setTextColor(100, 100, 100); doc.setFontSize(8); doc.setFont("helvetica", "normal");
     doc.text(label, 16, y);
     doc.setTextColor(...darkGray); doc.setFontSize(9); doc.setFont("helvetica", "bold");
-    doc.text(value, 75, y);
+    doc.text(value, 80, y);
     y += 9;
   });
 
   // AI section
   if (cert.aiVerdict) {
     y += 4;
+    const boxH = cert.aiReason ? 26 : 16;
     doc.setFillColor(255, 244, 244);
-    doc.rect(14, y - 4, 182, cert.aiReason ? 24 : 14, "F");
-    doc.setDrawColor(200, 50, 50); doc.setLineWidth(0.3);
-    doc.rect(14, y - 4, 182, cert.aiReason ? 24 : 14);
+    doc.rect(14, y - 4, 182, boxH, "F");
+    doc.setDrawColor(...red); doc.setLineWidth(0.4);
+    doc.rect(14, y - 4, 182, boxH);
     doc.setTextColor(...red); doc.setFontSize(8); doc.setFont("helvetica", "bold");
     doc.text("AI VERIFICATION RESULT", 16, y + 1);
     const { label } = normalizeVerdict_export(cert.aiVerdict);
+    const score = cert.aiScore != null ? Math.round(cert.aiScore <= 1 ? cert.aiScore * 100 : cert.aiScore) + "/100" : "N/A";
     doc.setFontSize(10);
-    doc.text(`${label}   Score: ${cert.aiScore != null ? Math.round(cert.aiScore <= 1 ? cert.aiScore * 100 : cert.aiScore) + "/100" : "N/A"}`, 16, y + 8);
+    doc.text(`${label}   Score: ${score}`, 16, y + 9);
     if (cert.aiReason) {
       doc.setTextColor(...darkGray); doc.setFontSize(8); doc.setFont("helvetica", "normal");
       const lines = doc.splitTextToSize(cert.aiReason, 172);
-      doc.text(lines.slice(0, 2), 16, y + 16);
+      doc.text(lines.slice(0, 2), 16, y + 18);
     }
-    y += cert.aiReason ? 28 : 18;
+    y += boxH + 4;
   }
 
-  // Blockchain
+  // Blockchain section
   if (cert.blockchainTxId) {
-    y += 4;
+    y += 2;
     doc.setFillColor(235, 245, 255);
-    doc.rect(14, y - 4, 182, 16, "F");
-    doc.setTextColor(20, 80, 160); doc.setFontSize(8); doc.setFont("helvetica", "bold");
-    doc.text("⛓  BLOCKCHAIN TRANSACTION", 16, y + 1);
+    doc.rect(14, y - 4, 182, 18, "F");
+    doc.setTextColor(...blue); doc.setFontSize(8); doc.setFont("helvetica", "bold");
+    doc.text("BLOCKCHAIN TRANSACTION", 16, y + 1);
     doc.setFontSize(7.5); doc.setFont("helvetica", "normal");
-    doc.text(cert.blockchainTxId, 16, y + 8);
-    y += 20;
+    const txLines = doc.splitTextToSize(cert.blockchainTxId, 172);
+    doc.text(txLines, 16, y + 8);
+    y += 22;
   }
 
-  // Attached certificate image (if image, embed it; if PDF, note it)
+  // Attached certificate image
   if (cert.imagePath) {
     const fileUrl = buildFileUrl(cert.imagePath);
     const isPdf = cert.imagePath.toLowerCase().endsWith(".pdf");
     y += 4;
     doc.setTextColor(...darkGray); doc.setFontSize(9); doc.setFont("helvetica", "bold");
-    doc.text("🟢  Attached Halal Certificate:", 14, y);
-    y += 5;
+    doc.text("Attached Halal Certificate:", 14, y);
+    y += 6;
     if (isPdf) {
-      doc.setFontSize(8); doc.setFont("helvetica", "normal"); doc.setTextColor(20, 80, 160);
-      doc.textWithLink("📄 Open attached PDF →", 14, y, { url: fileUrl });
+      doc.setFontSize(8); doc.setFont("helvetica", "normal"); doc.setTextColor(...blue);
+      doc.textWithLink("Open attached PDF certificate", 14, y, { url: fileUrl });
+      y += 8;
     } else {
       try {
         const resp = await fetch(fileUrl);
-        const blob = await resp.blob();
-        const b64 = await new Promise<string>(res => { const r = new FileReader(); r.onload = () => res((r.result as string).split(",")[1]); r.readAsDataURL(blob); });
-        const ext = cert.imagePath.toLowerCase().endsWith(".png") ? "PNG" : "JPEG";
-        const remaining = 280 - y;
-        const imgH = Math.min(80, remaining);
-        doc.addImage(b64, ext, 14, y, 120, imgH);
-        y += imgH + 6;
+        if (resp.ok) {
+          const blob = await resp.blob();
+          const b64 = await new Promise<string>(res => {
+            const r = new FileReader();
+            r.onload = () => res((r.result as string).split(",")[1]);
+            r.readAsDataURL(blob);
+          });
+          const ext = cert.imagePath.toLowerCase().endsWith(".png") ? "PNG" : "JPEG";
+          const remaining = 280 - y;
+          const imgH = Math.min(90, remaining);
+          doc.addImage(b64, ext, 14, y, 130, imgH);
+          y += imgH + 6;
+        } else {
+          doc.setFontSize(8); doc.setTextColor(...blue);
+          doc.textWithLink("View certificate image", 14, y, { url: fileUrl });
+          y += 8;
+        }
       } catch {
-        doc.setFontSize(8); doc.setFont("helvetica", "normal"); doc.setTextColor(20, 80, 160);
-        doc.textWithLink("🔗 View certificate image →", 14, y, { url: fileUrl });
+        doc.setFontSize(8); doc.setTextColor(...blue);
+        doc.textWithLink("View certificate image", 14, y, { url: fileUrl });
+        y += 8;
       }
+    }
+  }
+
+  // Health certificate
+  if (cert.healthImagePath) {
+    const fileUrl = buildFileUrl(cert.healthImagePath);
+    const isPdf = cert.healthImagePath.toLowerCase().endsWith(".pdf");
+    y += 2;
+    doc.setTextColor(...darkGray); doc.setFontSize(9); doc.setFont("helvetica", "bold");
+    doc.text("Attached Health Certificate:", 14, y);
+    y += 6;
+    if (isPdf) {
+      doc.setFontSize(8); doc.setFont("helvetica", "normal"); doc.setTextColor(...blue);
+      doc.textWithLink("Open attached PDF health certificate", 14, y, { url: fileUrl });
+    } else {
+      doc.setFontSize(8); doc.setFont("helvetica", "normal"); doc.setTextColor(...blue);
+      doc.textWithLink("View health certificate image", 14, y, { url: fileUrl });
     }
   }
 

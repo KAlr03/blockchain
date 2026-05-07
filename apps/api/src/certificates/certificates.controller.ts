@@ -2,7 +2,19 @@ import multer from "multer";
 import { asyncHandler } from "../lib/http.js";
 import { getCertificate, getCertificates, reviewCertificate, uploadCertificate, deleteCertificate } from "./certificates.service.js";
 
-export const certificateUpload = multer({ storage: multer.memoryStorage() });
+const ALLOWED_MIMETYPES = ["application/pdf", "image/png", "image/jpeg"];
+
+export const certificateUpload = multer({
+  storage: multer.memoryStorage(),
+  fileFilter: (_req, file, cb) => {
+    if (ALLOWED_MIMETYPES.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error("Only PDF, PNG, and JPG files are accepted. Please convert your file and try again."));
+    }
+  },
+  limits: { fileSize: 10 * 1024 * 1024 } // 10MB max
+});
 
 export const uploadCertificateController = asyncHandler(async (req, res) => {
   const files = req.files as { [fieldname: string]: Express.Multer.File[] } | undefined;
