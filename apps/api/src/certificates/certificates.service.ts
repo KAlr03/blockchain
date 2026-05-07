@@ -89,7 +89,6 @@ export async function uploadCertificate(file: Express.Multer.File, input: unknow
       healthImageDataUrl: healthImageData ?? null,
     });
   });
-  });
 
   return certificate;
 }
