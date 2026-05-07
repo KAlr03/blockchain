@@ -4,7 +4,9 @@ import type { CertificateDto } from "@halal/shared";
 import { apiRequest } from "../api/client.js";
 import { useAuth } from "../features/auth/auth-context.js";
 import { useLang } from "../features/lang/lang-context.js";
-import { jsPDF } from "jspdf"; = import.meta.env.VITE_API_URL || "http://localhost:4000";
+import { jsPDF } from "jspdf";
+
+const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:4000";
 
 function buildFileUrl(filePath: string): string {
   if (!filePath) return "";
@@ -138,53 +140,54 @@ function normalizeVerdict_export(v: string) {
 }
 
 function CertFileViewer({ cert }: { cert: CertificateDto }) {
+  const [halalImgError, setHalalImgError] = useState(false);
+  const [healthImgError, setHealthImgError] = useState(false);
   if (!cert.imagePath && !cert.healthImagePath) return null;
+
+  function FileBlock({ filePath, label, accent, imgError, setImgErr }: {
+    filePath: string; label: string; accent: string;
+    imgError: boolean; setImgErr: (v: boolean) => void;
+  }) {
+    const url = buildFileUrl(filePath);
+    const isPdf = filePath.toLowerCase().endsWith(".pdf");
+    return (
+      <div style={{ margin: "0.8rem 0", border: `1px solid ${accent}33`, borderRadius: 10, overflow: "hidden" }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0.6rem 0.85rem", background: `${accent}18` }}>
+          <div style={{ fontWeight: 700, fontSize: "0.85rem", color: accent }}>{label}</div>
+          <a href={url} target="_blank" rel="noreferrer"
+            style={{ display: "inline-flex", alignItems: "center", gap: "0.3rem", background: accent, color: "#fff", borderRadius: 6, padding: "0.3rem 0.75rem", fontSize: "0.8rem", fontWeight: 600, textDecoration: "none" }}>
+            {isPdf ? "📄 Open PDF" : "🖼 View Image"} ↗
+          </a>
+        </div>
+        {!isPdf && (
+          <div style={{ background: "#f9f9f9", padding: "0.5rem" }}>
+            {imgError ? (
+              <div style={{ textAlign: "center", color: "#888", fontSize: "0.8rem", padding: "1rem" }}>
+                Preview unavailable — click "View Image" above to open directly.
+              </div>
+            ) : (
+              <img
+                src={url}
+                alt={label}
+                style={{ width: "100%", maxHeight: 380, objectFit: "contain", borderRadius: 6, display: "block", cursor: "zoom-in" }}
+                onError={() => setImgErr(true)}
+                onClick={() => window.open(url, "_blank")}
+              />
+            )}
+          </div>
+        )}
+      </div>
+    );
+  }
+
   return (
     <div>
-      {cert.imagePath && (() => {
-        const url = buildFileUrl(cert.imagePath);
-        const isPdf = cert.imagePath.toLowerCase().endsWith(".pdf");
-        return (
-          <div style={{ margin: "0.8rem 0" }}>
-            <div style={{ fontWeight: 600, fontSize: "0.85rem", color: "var(--text-muted)", marginBottom: "0.4rem" }}>🟢 Halal Certificate</div>
-            {isPdf ? (
-              <div style={{ background: "var(--sage-pale)", border: "1px solid var(--border)", borderRadius: 8, padding: "0.75rem", display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                <span style={{ fontSize: "1.5rem" }}>📄</span>
-                <div>
-                  <div style={{ fontWeight: 600, fontSize: "0.85rem" }}>PDF Certificate</div>
-                  <a href={url} target="_blank" rel="noreferrer" style={{ color: "var(--blue,#2563eb)", fontSize: "0.8rem" }}>Open PDF to view ↗</a>
-                </div>
-              </div>
-            ) : (
-              <a href={url} target="_blank" rel="noreferrer">
-                <img src={url} alt="Halal Certificate" style={{ width: "100%", maxHeight: 400, objectFit: "contain", borderRadius: 8, border: "1px solid var(--border)", background: "#f9f9f9", cursor: "zoom-in" }} onError={e => { (e.target as HTMLImageElement).style.display = "none"; }} />
-              </a>
-            )}
-          </div>
-        );
-      })()}
-      {cert.healthImagePath && (() => {
-        const url = buildFileUrl(cert.healthImagePath);
-        const isPdf = cert.healthImagePath.toLowerCase().endsWith(".pdf");
-        return (
-          <div style={{ margin: "0.8rem 0" }}>
-            <div style={{ fontWeight: 600, fontSize: "0.85rem", color: "var(--text-muted)", marginBottom: "0.4rem" }}>🔵 Health / Food Safety Certificate</div>
-            {isPdf ? (
-              <div style={{ background: "#EAF2FF", border: "1px solid var(--border)", borderRadius: 8, padding: "0.75rem", display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                <span style={{ fontSize: "1.5rem" }}>📄</span>
-                <div>
-                  <div style={{ fontWeight: 600, fontSize: "0.85rem" }}>PDF Health Certificate</div>
-                  <a href={url} target="_blank" rel="noreferrer" style={{ color: "var(--blue,#2563eb)", fontSize: "0.8rem" }}>Open PDF to view ↗</a>
-                </div>
-              </div>
-            ) : (
-              <a href={url} target="_blank" rel="noreferrer">
-                <img src={url} alt="Health Certificate" style={{ width: "100%", maxHeight: 400, objectFit: "contain", borderRadius: 8, border: "1px solid #3498db", background: "#f9f9f9", cursor: "zoom-in" }} onError={e => { (e.target as HTMLImageElement).style.display = "none"; }} />
-              </a>
-            )}
-          </div>
-        );
-      })()}
+      {cert.imagePath && (
+        <FileBlock filePath={cert.imagePath} label="🟢 Halal Certificate" accent="#2d6440" imgError={halalImgError} setImgErr={setHalalImgError} />
+      )}
+      {cert.healthImagePath && (
+        <FileBlock filePath={cert.healthImagePath} label="🔵 Health / Food Safety Certificate" accent="#2563eb" imgError={healthImgError} setImgErr={setHealthImgError} />
+      )}
     </div>
   );
 }
@@ -397,9 +400,25 @@ function AuthorityCertificates() {
                   </div>
                   <AIBox cert={cert} />
                   <CertFileViewer cert={cert} />
+                  {/* Export + View buttons always visible for authority */}
+                  <div style={{ display:"flex", gap:"0.5rem", flexWrap:"wrap", marginTop:"0.5rem" }}>
+                    <button className="btn btn-ghost btn-sm" onClick={()=>void exportCertAsPdf(cert)}>⬇️ Export PDF</button>
+                    {cert.imagePath && (
+                      <a href={buildFileUrl(cert.imagePath)} target="_blank" rel="noreferrer"
+                        className="btn btn-ghost btn-sm" style={{ textDecoration:"none" }}>
+                        🖼 View Certificate ↗
+                      </a>
+                    )}
+                    {cert.healthImagePath && (
+                      <a href={buildFileUrl(cert.healthImagePath)} target="_blank" rel="noreferrer"
+                        className="btn btn-ghost btn-sm" style={{ textDecoration:"none" }}>
+                        🔵 View Health Cert ↗
+                      </a>
+                    )}
+                  </div>
                   {isPending && (
                     <>
-                      <div className="form-group" style={{ marginBottom:"0.6rem" }}>
+                      <div className="form-group" style={{ marginBottom:"0.6rem", marginTop:"0.75rem" }}>
                         <label>{tr("authorityNotesRequired")}</label>
                         <textarea value={notes[cert.id]??""} onChange={e=>setNotes(p=>({...p,[cert.id]:e.target.value}))} placeholder={tr("authorityNotesPlaceholder")} style={{ minHeight:"60px" }} />
                       </div>
