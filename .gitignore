@@ -1,0 +1,13 @@
+node_modules
+dist
+coverage
+.env
+.env.*
+uploads
+.DS_Store
+artifacts
+cache
+apps/web/.vite
+apps/web/dist
+packages/contracts/artifacts
+packages/contracts/cache

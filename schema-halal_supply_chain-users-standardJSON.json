@@ -1,0 +1,76 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": [
+    "_id",
+    "Country",
+    "CreatedAt",
+    "Email",
+    "ManufacturerID",
+    "Name",
+    "OrganizationName",
+    "Password",
+    "Role",
+    "Status"
+  ],
+  "properties": {
+    "_id": {
+      "$ref": "#/$defs/ObjectId"
+    },
+    "Country": {
+      "type": "string"
+    },
+    "CreatedAt": {
+      "$ref": "#/$defs/Date"
+    },
+    "Email": {
+      "type": "string"
+    },
+    "ManufacturerID": {
+      "type": "string"
+    },
+    "Name": {
+      "type": "string"
+    },
+    "OrganizationName": {
+      "type": "string"
+    },
+    "Password": {
+      "type": "string"
+    },
+    "Role": {
+      "type": "string"
+    },
+    "Status": {
+      "type": "string"
+    }
+  },
+  "$defs": {
+    "ObjectId": {
+      "type": "object",
+      "properties": {
+        "$oid": {
+          "type": "string",
+          "pattern": "^[0-9a-fA-F]{24}$"
+        }
+      },
+      "required": [
+        "$oid"
+      ],
+      "additionalProperties": false
+    },
+    "Date": {
+      "type": "object",
+      "properties": {
+        "$date": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "$date"
+      ],
+      "additionalProperties": false
+    }
+  }
+}

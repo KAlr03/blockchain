@@ -1,0 +1,23 @@
+{
+  "name": "halal-supply-chain-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev:api": "npm run dev --workspace @halal/api",
+    "dev:web": "npm run dev --workspace @halal/web",
+    "dev:worker": "npm run dev --workspace @halal/worker",
+    "db:init": "npm run db:init --workspace @halal/api",
+    "db:seed-demo": "npm run db:seed-demo --workspace @halal/api",
+    "contracts:node": "npm run node:local --workspace @halal/contracts",
+    "contracts:deploy:local": "npm run deploy:local --workspace @halal/contracts",
+    "build": "npm run build --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present",
+    "lint": "npm run lint --workspaces --if-present",
+    "contracts:test": "npm run test --workspace @halal/contracts",
+    "contracts:compile": "npm run compile --workspace @halal/contracts"
+  }
+}

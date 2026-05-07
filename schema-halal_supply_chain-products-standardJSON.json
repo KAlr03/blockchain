@@ -1,0 +1,92 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": [
+    "_id",
+    "BatchNumber",
+    "Brand",
+    "Category",
+    "CreatedAt",
+    "HalalRef",
+    "HealthRef",
+    "Manufacturer",
+    "OriginCountry",
+    "ProductID",
+    "ProductImage",
+    "ProductName",
+    "QRCodePath",
+    "Weight"
+  ],
+  "properties": {
+    "_id": {
+      "$ref": "#/$defs/ObjectId"
+    },
+    "BatchNumber": {
+      "type": "string"
+    },
+    "Brand": {
+      "type": "string"
+    },
+    "Category": {
+      "type": "string"
+    },
+    "CreatedAt": {
+      "$ref": "#/$defs/Date"
+    },
+    "HalalRef": {
+      "type": "string"
+    },
+    "HealthRef": {
+      "type": "string"
+    },
+    "Manufacturer": {
+      "type": "string"
+    },
+    "OriginCountry": {
+      "type": "string"
+    },
+    "ProductID": {
+      "type": "string"
+    },
+    "ProductImage": {
+      "type": "null"
+    },
+    "ProductName": {
+      "type": "string"
+    },
+    "QRCodePath": {
+      "type": "null"
+    },
+    "Weight": {
+      "type": "string"
+    }
+  },
+  "$defs": {
+    "ObjectId": {
+      "type": "object",
+      "properties": {
+        "$oid": {
+          "type": "string",
+          "pattern": "^[0-9a-fA-F]{24}$"
+        }
+      },
+      "required": [
+        "$oid"
+      ],
+      "additionalProperties": false
+    },
+    "Date": {
+      "type": "object",
+      "properties": {
+        "$date": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "$date"
+      ],
+      "additionalProperties": false
+    }
+  }
+}

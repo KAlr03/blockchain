@@ -1,0 +1,110 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": [
+    "_id",
+    "ActorName",
+    "BatchNumber",
+    "BlockchainHash",
+    "BlockchainTxID",
+    "Country",
+    "Location",
+    "Notes",
+    "ProductID",
+    "Stage",
+    "Status",
+    "Temperature",
+    "Timestamp"
+  ],
+  "properties": {
+    "_id": {
+      "$ref": "#/$defs/ObjectId"
+    },
+    "ActorName": {
+      "type": "string"
+    },
+    "BatchNumber": {
+      "type": "string"
+    },
+    "BlockchainTimestamp": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/Date"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "BlockchainHash": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "BlockchainTxID": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "Country": {
+      "type": "string"
+    },
+    "Location": {
+      "type": "string"
+    },
+    "Notes": {
+      "type": "string"
+    },
+    "ProductID": {
+      "type": "string"
+    },
+    "RecordHash": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "Stage": {
+      "type": "string"
+    },
+    "Status": {
+      "type": "string"
+    },
+    "Temperature": {
+      "type": "string"
+    },
+    "Timestamp": {
+      "$ref": "#/$defs/Date"
+    }
+  },
+  "$defs": {
+    "ObjectId": {
+      "type": "object",
+      "properties": {
+        "$oid": {
+          "type": "string",
+          "pattern": "^[0-9a-fA-F]{24}$"
+        }
+      },
+      "required": [
+        "$oid"
+      ],
+      "additionalProperties": false
+    },
+    "Date": {
+      "type": "object",
+      "properties": {
+        "$date": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "$date"
+      ],
+      "additionalProperties": false
+    }
+  }
+}

@@ -1,0 +1,122 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": [
+    "_id",
+    "AICheckedAt",
+    "AIReason",
+    "AIScore",
+    "AIVerdict",
+    "ApprovedAt",
+    "ApprovedBy",
+    "Authority",
+    "BlockchainHash",
+    "BlockchainTimestamp",
+    "BlockchainTxID",
+    "CertNumber",
+    "CertType",
+    "CreatedAt",
+    "ExpiryDate",
+    "ImageHash",
+    "ImagePath",
+    "IssueDate",
+    "Status"
+  ],
+  "properties": {
+    "_id": {
+      "type": "string"
+    },
+    "AICheckedAt": {
+      "$ref": "#/$defs/Date"
+    },
+    "AIReason": {
+      "type": "string"
+    },
+    "AIScore": {
+      "type": "integer"
+    },
+    "AIVerdict": {
+      "type": "string"
+    },
+    "ApprovedAt": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/Date"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "ApprovedBy": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "Authority": {
+      "type": "string"
+    },
+    "BlockchainHash": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "BlockchainTimestamp": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/Date"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "BlockchainTxID": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "CertNumber": {
+      "type": "string"
+    },
+    "CertType": {
+      "type": "string"
+    },
+    "CreatedAt": {
+      "$ref": "#/$defs/Date"
+    },
+    "ExpiryDate": {
+      "$ref": "#/$defs/Date"
+    },
+    "ImageHash": {
+      "type": "string"
+    },
+    "ImagePath": {
+      "type": "string"
+    },
+    "IssueDate": {
+      "$ref": "#/$defs/Date"
+    },
+    "Status": {
+      "type": "string"
+    }
+  },
+  "$defs": {
+    "Date": {
+      "type": "object",
+      "properties": {
+        "$date": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "$date"
+      ],
+      "additionalProperties": false
+    }
+  }
+}
