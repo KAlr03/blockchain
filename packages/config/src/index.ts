@@ -43,6 +43,7 @@ const envSchema = z.object({
   BLOCKCHAIN_PRIVATE_KEY: z.string().default(""),
   CONTRACT_ADDRESS: z.string().default(""),
   OCR_LANG: z.string().default("eng"),
+  OPENAI_API_KEY: z.string().optional(),
   WORKER_POLL_MS: z.coerce.number().default(10000),
   BOOTSTRAP_ADMIN_EMAIL: z.string().optional(),
   BOOTSTRAP_ADMIN_PASSWORD: z.string().optional(),

@@ -2,6 +2,7 @@ import { uploadCertificateSchema, reviewCertificateSchema } from "@halal/shared"
 import { buildCertificateId } from "../lib/ids.js";
 import { sha256FromBuffer } from "../lib/hash.js";
 import { storeUploadedFile } from "../storage/storage.service.js";
+import { runAiVerification } from "../ai/ai.service.js";
 import {
   createCertificateRecord,
   findCertificateById,
@@ -13,109 +14,28 @@ import {
 import { attachCertificateToProduct, getProduct, getProductByCertificateRef } from "../products/products.service.js";
 import { recordCertificateDecisionOnChain } from "../blockchain/blockchain.service.js";
 
-// ── Inline AI verification triggered immediately on upload ────────────────────
-async function runInlineAIVerification(certificateId: string, imagePath: string, certData: {
+// ── AI verification using GPT-4o vision ──────────────────────────────────────
+async function runInlineAIVerification(certificateId: string, certData: {
   certNumber: string;
   certType: string;
   authority: string;
   issueDate: Date;
   expiryDate: Date;
-}, healthImagePath?: string) {
+  imageDataUrl: string | null;
+  healthImageDataUrl?: string | null;
+}) {
   try {
-    const now = new Date();
-    const reasons: string[] = [];
-    const flags: string[] = [];
-    const rejects: string[] = [];
-    let score = 0;
-
-    // 1. Expiry date check
-    if (certData.expiryDate < now) {
-      rejects.push(`Certificate expired on ${certData.expiryDate.toLocaleDateString()}.`);
-    } else {
-      score += 20;
-      reasons.push("Certificate is not expired.");
-    }
-
-    // 2. Issue date check
-    if (certData.issueDate > certData.expiryDate) {
-      rejects.push("Issue date is after expiry date — invalid certificate dates.");
-    } else if (certData.issueDate > now) {
-      rejects.push("Issue date is in the future — invalid.");
-    } else {
-      score += 10;
-      reasons.push("Certificate dates are valid.");
-    }
-
-    // 3. Certificate number
-    if (!certData.certNumber || certData.certNumber.trim().length < 3) {
-      rejects.push("Certificate number is missing or too short.");
-    } else {
-      score += 15;
-      reasons.push("Certificate number is present.");
-    }
-
-    // 4. File format
-    const ext = imagePath.toLowerCase();
-    if (ext.endsWith(".pdf") || ext.endsWith(".png") || ext.endsWith(".jpg") || ext.endsWith(".jpeg")) {
-      score += 10;
-      reasons.push("Document format is accepted.");
-    } else {
-      rejects.push("Document format is not accepted. Please upload PDF, PNG, or JPG.");
-    }
-
-    // 5. Authority name
-    if (!certData.authority || certData.authority.trim().length < 2) {
-      flags.push("Issuing authority name is missing.");
-    } else {
-      score += 15;
-      reasons.push(`Issuing authority recorded: ${certData.authority}.`);
-    }
-
-    // 6. Certificate type
-    if (!certData.certType || certData.certType.trim().length < 2) {
-      flags.push("Certificate type is not specified.");
-    } else {
-      score += 10;
-      reasons.push(`Certificate type: ${certData.certType}.`);
-    }
-
-    // 7. Halal classification
-    if (certData.certType?.toUpperCase().includes("HALAL")) {
-      score += 20;
-      reasons.push("Certificate is classified as a Halal certificate.");
-    } else if (certData.certType?.toUpperCase().includes("FOOD") || certData.certType?.toUpperCase().includes("HEALTH") || certData.certType?.toUpperCase().includes("SAFETY")) {
-      score += 15;
-      reasons.push("Certificate is classified as a Food Safety / Health certificate.");
-    } else {
-      flags.push("Certificate type could not be clearly classified.");
-    }
-
-    let verdict: string;
-    let finalReason: string;
-
-    if (rejects.length > 0) {
-      verdict = "REJECTED";
-      finalReason = rejects.join(" ");
-      score = Math.min(score, 30);
-    } else if (flags.length > 0) {
-      verdict = "FLAGGED";
-      finalReason = flags.join(" ") + " — Requires P.A.F.N. manual review.";
-      score = Math.min(score, 65);
-    } else {
-      verdict = "APPROVED";
-      finalReason = reasons.join(" ") + " — All automated checks passed. Ready for P.A.F.N. authority review.";
-      score = Math.min(score, 100);
-    }
+    const result = await runAiVerification(certData);
 
     await updateCertificateRecord(certificateId, {
-      AICheckedAt: now,
-      AIReason: finalReason,
-      AIScore: score,
-      AIVerdict: verdict,
+      AICheckedAt: result.checkedAt,
+      AIReason: result.reason,
+      AIScore: result.score,
+      AIVerdict: result.verdict,
       Status: "UNDER_AUTHORITY_REVIEW",
     });
 
-    console.log(`[api] AI check complete for ${certificateId}: ${verdict} (${score}/100)`);
+    console.log(`[api] AI check complete for ${certificateId}: ${result.verdict} (${result.score}/100)`);
   } catch (err) {
     console.error(`[api] AI check failed for ${certificateId}:`, err);
   }
@@ -157,15 +77,18 @@ export async function uploadCertificate(file: Express.Multer.File, input: unknow
 
   await attachCertificateToProduct(payload.productId, certificate.id);
 
-  // ── Trigger AI verification immediately (no waiting for worker poll) ────────
+  // ── Trigger AI verification immediately with the actual image ───────────
   setImmediate(() => {
-    runInlineAIVerification(certificate.id, storedFile.publicPath, {
+    runInlineAIVerification(certificate.id, {
       certNumber: payload.certNumber,
       certType: payload.certType,
       authority: payload.authority,
       issueDate: new Date(payload.issueDate),
       expiryDate: new Date(payload.expiryDate),
-    }, healthImagePath);
+      imageDataUrl: storedFile.dataUrl ?? null,
+      healthImageDataUrl: healthImageData ?? null,
+    });
+  });
   });
 
   return certificate;
