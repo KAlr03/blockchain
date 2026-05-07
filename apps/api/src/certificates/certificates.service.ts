@@ -134,9 +134,11 @@ export async function uploadCertificate(file: Express.Multer.File, input: unknow
 
   // Store health certificate if provided
   let healthImagePath: string | undefined;
+  let healthImageData: string | undefined;
   if (healthFile) {
     const storedHealthFile = await storeUploadedFile(healthFile);
     healthImagePath = storedHealthFile.publicPath;
+    healthImageData = storedHealthFile.dataUrl ?? undefined;
   }
 
   const certificate = await createCertificateRecord({
@@ -146,9 +148,11 @@ export async function uploadCertificate(file: Express.Multer.File, input: unknow
     authority: payload.authority,
     imagePath: storedFile.publicPath,
     imageHash: certificateHash,
+    imageData: storedFile.dataUrl ?? undefined,
     issueDate: new Date(payload.issueDate),
     expiryDate: new Date(payload.expiryDate),
     ...(healthImagePath && { healthImagePath }),
+    ...(healthImageData && { healthImageData }),
   });
 
   await attachCertificateToProduct(payload.productId, certificate.id);

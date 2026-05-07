@@ -6,6 +6,7 @@ import { env } from "@halal/config";
 export interface StoredFile {
   path: string;
   publicPath: string;
+  dataUrl: string | null;
 }
 
 const s3 = new S3Client({
@@ -19,6 +20,8 @@ const s3 = new S3Client({
 });
 
 export async function storeUploadedFile(file: Express.Multer.File): Promise<StoredFile> {
+  const dataUrl = `data:${file.mimetype};base64,${file.buffer.toString("base64")}`;
+
   if (env.STORAGE_DRIVER === "s3") {
     const key = `certificates/${Date.now()}-${file.originalname}`;
 
@@ -33,7 +36,8 @@ export async function storeUploadedFile(file: Express.Multer.File): Promise<Stor
 
     return {
       path: key,
-      publicPath: `s3://${env.AWS_S3_BUCKET}/${key}`
+      publicPath: `s3://${env.AWS_S3_BUCKET}/${key}`,
+      dataUrl
     };
   }
 
@@ -47,6 +51,7 @@ export async function storeUploadedFile(file: Express.Multer.File): Promise<Stor
 
   return {
     path: publicPath,
-    publicPath
+    publicPath,
+    dataUrl
   };
 }

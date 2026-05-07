@@ -177,34 +177,36 @@ function CertFileViewer({ cert }: { cert: CertificateDto }) {
   const [healthImgError, setHealthImgError] = useState(false);
   if (!cert.imagePath && !cert.healthImagePath) return null;
 
-  function FileBlock({ filePath, label, accent, imgError, setImgErr }: {
-    filePath: string; label: string; accent: string;
+  function FileBlock({ filePath, fileData, label, accent, imgError, setImgErr }: {
+    filePath: string; fileData: string | null; label: string; accent: string;
     imgError: boolean; setImgErr: (v: boolean) => void;
   }) {
-    const url = buildFileUrl(filePath);
+    const urlSrc = buildFileUrl(filePath);
     const isPdf = filePath.toLowerCase().endsWith(".pdf");
+    // Use base64 data if available, otherwise fall back to URL
+    const imgSrc = fileData ?? urlSrc;
     return (
       <div style={{ margin: "0.8rem 0", border: `1px solid ${accent}33`, borderRadius: 10, overflow: "hidden" }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0.6rem 0.85rem", background: `${accent}18` }}>
           <div style={{ fontWeight: 700, fontSize: "0.85rem", color: accent }}>{label}</div>
-          <a href={url} target="_blank" rel="noreferrer"
+          <a href={imgSrc} target="_blank" rel="noreferrer"
             style={{ display: "inline-flex", alignItems: "center", gap: "0.3rem", background: accent, color: "#fff", borderRadius: 6, padding: "0.3rem 0.75rem", fontSize: "0.8rem", fontWeight: 600, textDecoration: "none" }}>
-            {isPdf ? "📄 Open PDF" : "🖼 View Image"} ↗
+            {isPdf ? "Open PDF" : "View Full Image"} ↗
           </a>
         </div>
         {!isPdf && (
           <div style={{ background: "#f9f9f9", padding: "0.5rem" }}>
             {imgError ? (
               <div style={{ textAlign: "center", color: "#888", fontSize: "0.8rem", padding: "1rem" }}>
-                Preview unavailable — click "View Image" above to open directly.
+                Preview unavailable — click "View Full Image" above to open directly.
               </div>
             ) : (
               <img
-                src={url}
+                src={imgSrc}
                 alt={label}
                 style={{ width: "100%", maxHeight: 380, objectFit: "contain", borderRadius: 6, display: "block", cursor: "zoom-in" }}
                 onError={() => setImgErr(true)}
-                onClick={() => window.open(url, "_blank")}
+                onClick={() => window.open(imgSrc, "_blank")}
               />
             )}
           </div>
@@ -216,10 +218,10 @@ function CertFileViewer({ cert }: { cert: CertificateDto }) {
   return (
     <div>
       {cert.imagePath && (
-        <FileBlock filePath={cert.imagePath} label="🟢 Halal Certificate" accent="#2d6440" imgError={halalImgError} setImgErr={setHalalImgError} />
+        <FileBlock filePath={cert.imagePath} fileData={cert.imageData ?? null} label="Halal Certificate" accent="#2d6440" imgError={halalImgError} setImgErr={setHalalImgError} />
       )}
       {cert.healthImagePath && (
-        <FileBlock filePath={cert.healthImagePath} label="🔵 Health / Food Safety Certificate" accent="#2563eb" imgError={healthImgError} setImgErr={setHealthImgError} />
+        <FileBlock filePath={cert.healthImagePath} fileData={cert.healthImageData ?? null} label="Health / Food Safety Certificate" accent="#2563eb" imgError={healthImgError} setImgErr={setHealthImgError} />
       )}
     </div>
   );

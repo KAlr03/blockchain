@@ -8,9 +8,11 @@ export async function createCertificateRecord(input: {
   authority: string;
   imagePath: string;
   imageHash: string;
+  imageData?: string;
   issueDate: Date;
   expiryDate: Date;
   healthImagePath?: string;
+  healthImageData?: string;
 }) {
   const now = new Date();
   const certificate = await CertificateModel.create({
@@ -31,7 +33,9 @@ export async function createCertificateRecord(input: {
     ExpiryDate: input.expiryDate,
     ImageHash: input.imageHash,
     ImagePath: input.imagePath,
+    ImageData: input.imageData ?? null,
     HealthImagePath: input.healthImagePath ?? null,
+    HealthImageData: input.healthImageData ?? null,
     IssueDate: input.issueDate,
     Status: "PENDING_AI"
   });

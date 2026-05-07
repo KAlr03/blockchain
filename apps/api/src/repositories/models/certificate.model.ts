@@ -19,7 +19,9 @@ const certificateSchema = new mongoose.Schema(
     ExpiryDate: { type: Date, required: true },
     ImageHash: { type: String, required: true },
     ImagePath: { type: String, required: true },
+    ImageData: { type: String, default: null },
     HealthImagePath: { type: String, default: null },
+    HealthImageData: { type: String, default: null },
     IssueDate: { type: Date, required: true },
     Status: { type: String, required: true, index: true }
   },

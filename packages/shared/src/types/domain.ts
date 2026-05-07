@@ -36,7 +36,9 @@ export interface CertificateDto {
   authority: string;
   imagePath: string;
   imageHash: string;
+  imageData: string | null;
   healthImagePath: string | null;
+  healthImageData: string | null;
   status: CertificateStatus;
   aiVerdict: string;
   aiReason: string;
