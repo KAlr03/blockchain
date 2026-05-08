@@ -434,6 +434,7 @@ function AuthorityCertificates() {
                     {cert.approvedBy && <div className="cert-field"><div className="cf-label">{tr("reviewedBy")}</div><div className="cf-value">{cert.approvedBy}</div></div>}
                   </div>
                   <AIBox cert={cert} />
+                  {cert.blockchainTxId && <div className="blockchain-box"><h4>{tr("blockchainVerified")}</h4><p>{cert.blockchainTxId}</p></div>}
                   <CertFileViewer cert={cert} />
                   {/* Export + View buttons always visible for authority */}
                   <div style={{ display:"flex", gap:"0.5rem", flexWrap:"wrap", marginTop:"0.5rem" }}>
