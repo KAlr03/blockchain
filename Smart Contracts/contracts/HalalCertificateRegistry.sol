@@ -1,14 +1,16 @@
-// SPDX-License-Identifier: MIT
-pragma solidity ^0.8.24;
+// SPDX-License-Identifier: MIT     // means allowed to use for the public 
+pragma solidity ^0.8.24;            // version
 
-contract HalalCertificateRegistry {
-    enum HalalStatus {
-        UnderProcess,
+contract HalalCertificateRegistry {         // enum is a list of what’s only allowed
+
+    enum HalalStatus {                      //UnderProcess=0, Valid=1, NotValid=2, Expired=3. 
+        UnderProcess,                        // Every certificate starts as UnderProcess
         Valid,
         NotValid,
         Expired
     }
 
+// A struct is a template — like a form with labeled fields. 
     struct CertificateRecord {
         string batchID;
         string productID;
@@ -23,25 +25,37 @@ contract HalalCertificateRegistry {
         uint256 timestamp;
         bool exists;
     }
-
+//Multiple TraceSteps are stored as an array per certificate,
     struct TraceStep {
         string stepName;
         string location;
         string actor;
         uint256 timestamp;
     }
+//These five variables are the permanent storage of the contract 
+//— they live on the blockchain forever.
 
-    address public admin;
+    address public admin;           // Ethereum wallet address — a 42-character code like 0x1A2B3C.... It identifies who is who on the blockchain.
     mapping(address => bool) public authorities;
     mapping(address => bool) public manufacturers;
     mapping(string => CertificateRecord) private certificates;
-    mapping(string => TraceStep[]) private certificateTraceSteps;   
-    
+    mapping(string => TraceStep[]) private certificateTraceSteps;  
+
+
+    //Events are notifications that get logged to the blockchain when something happens. They do not store data inside the contract — they are more like a receipt. Tools like Etherscan read these events and display them publicly.
+indexed on a field means it can be searched and filtered efficiently — like putting an index on a database column.
+When approveCertificate() runs, it fires CertificateApproved — anyone watching the blockchain sees it immediately.
+
+
     event ManufacturerUpdated(address indexed account, bool allowed);
     event AuthorityUpdated(address indexed authorityAddress, bool allowed);
     event TraceStepAdded(string indexed batchID, string stepName, string location, string actor, uint256 timestamp);
     event CertificateAdded(string indexed batchID, string certificateHash, uint256 timestamp);
     event CertificateApproved(string indexed productID, HalalStatus status, uint256 timestamp);
+
+
+// modifier is a security check that runs before any function it is attached to.
+
 
     modifier onlyAdmin() {
         require(msg.sender == admin, "Only admin");
@@ -58,10 +72,16 @@ contract HalalCertificateRegistry {
         _;
     }
 
+
+//The constructor runs exactly once — when the contract is deployed to the blockchain. Never again. 
+
     constructor(address initialAuthority) {
         admin = msg.sender;
         authorities[initialAuthority] = true;
     }
+
+
+
 
     function setAuthority(address account, bool allowed) external onlyAdmin {
         authorities[account] = allowed;
@@ -72,6 +92,9 @@ contract HalalCertificateRegistry {
         manufacturers[account] = allowed;
         emit ManufacturerUpdated(account, allowed);
     }
+
+
+
 
     function addCertificate(
         string memory batchID,
@@ -90,6 +113,9 @@ contract HalalCertificateRegistry {
         require(bytes(certificateHash).length > 0, "certificateHash required");
         require(!certificates[batchID].exists, "Certificate already exists");
         require(expiryDate > issueDate, "Invalid expiry date");
+
+
+//This is the moment data is permanently written to the blockchain. We fill in every field of the CertificateRecord struct and store it in the certificates mapping under the batchID key.
 
         certificates[batchID] = CertificateRecord({
             batchID: batchID,
