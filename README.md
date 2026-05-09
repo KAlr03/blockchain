@@ -121,8 +121,7 @@ blockchain/
 │   ├── config/       # Environment parsing
 │   └── contracts/    # Hardhat + Solidity smart contract
 ├── Smart Contracts/  # Deployed contract source
-├── docs/             # Architecture documentation
-└── infra/docker/     # Local Docker support (MongoDB only)
+└── docs/             # Architecture documentation
 ```
 
 ---
