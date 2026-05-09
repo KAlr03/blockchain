@@ -18,7 +18,7 @@ function getStatus(v: VerificationDto) {
 export function VerifyPage() {
   const { productId: paramId } = useParams();
   const { lang, setLang, tr } = useLang();
-  const { user } = useAuth();
+  const { user, token } = useAuth(); // ← added token
   const isCustomer = user?.role === "CUSTOMER";
   const [productId, setProductId] = useState(paramId ?? "");
   const [verification, setVerification] = useState<VerificationDto|null>(null);
@@ -93,24 +93,34 @@ export function VerifyPage() {
     try {
       const r = await apiRequest<VerificationDto>(`/verify/${id.trim()}`);
       setVerification(r);
-      if (isCustomer) {
-        const history: string[] = JSON.parse(localStorage.getItem("halal-scan-history")||"[]");
-        if (!history.includes(id.trim())) {
-          history.push(id.trim());
-          localStorage.setItem("halal-scan-history", JSON.stringify(history.slice(-50)));
+
+      // ← Save scan history to API (not localStorage)
+      if (isCustomer && token) {
+        try {
+          await apiRequest("/scan-history", {
+            method: "POST",
+            body: JSON.stringify({ productId: id.trim() })
+          }, token);
+        } catch {
+          // non-critical, ignore
         }
       }
     } catch { setError(tr("productNotFound")); }
     finally { setLoading(false); }
   }
 
-  function saveToFavourites() {
-    const favs: string[] = JSON.parse(localStorage.getItem("halal-favourites")||"[]");
-    if (!favs.includes(productId.trim())) {
-      favs.push(productId.trim());
-      localStorage.setItem("halal-favourites", JSON.stringify(favs));
+  // ← Save favourite to API (not localStorage)
+  async function saveToFavourites() {
+    if (!token) return;
+    try {
+      await apiRequest("/favourites", {
+        method: "POST",
+        body: JSON.stringify({ productId: productId.trim() })
+      }, token);
+      setSaved(true);
+    } catch (err) {
+      console.error("Failed to save favourite", err);
     }
-    setSaved(true);
   }
 
   async function handleSubmit(e: FormEvent) { e.preventDefault(); await doVerify(productId); }
