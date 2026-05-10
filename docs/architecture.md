@@ -8,7 +8,6 @@
 - `packages/shared`: shared DTOs, enums, and Zod validation schemas
 - `packages/config`: environment parsing and defaults
 - `packages/contracts`: Hardhat project and Solidity contract
-- `infra/docker`: local container orchestration
 
 ## High-Level Blocks
 
@@ -19,9 +18,9 @@ flowchart LR
     web["apps/web<br/>React + Vite UI"]
     api["apps/api<br/>Express REST API"]
     worker["apps/worker<br/>AI / OCR / Async Jobs"]
-    mongo["MongoDB<br/>products / certificates / users / traceability_records"]
-    storage["File Storage<br/>local uploads or S3"]
-    chain["EVM Blockchain<br/>Hardhat locally / RPC in production"]
+    mongo["MongoDB Atlas<br/>products / certificates / users / traceability_records"]
+    storage["File Storage<br/>Railway uploads"]
+    chain["Ethereum Sepolia<br/>via Alchemy RPC"]
     contract["HalalCertificateRegistry<br/>smart contract"]
 
     public --> web
@@ -31,7 +30,6 @@ flowchart LR
     api --> storage
     api --> chain
     worker --> mongo
-    worker --> storage
     chain --> contract
 ```
 
@@ -80,7 +78,7 @@ flowchart TD
 ```mermaid
 flowchart TD
     data["Data And Integrity Layer"]
-    data --> mongo["MongoDB"]
+    data --> mongo["MongoDB Atlas"]
     data --> storage["File Storage"]
     data --> blockchain["Blockchain RPC"]
     blockchain --> contract["HalalCertificateRegistry"]
@@ -94,7 +92,6 @@ flowchart TD
     support --> shared["packages/shared"]
     support --> config["packages/config"]
     support --> contracts["packages/contracts"]
-    support --> infra["infra/docker"]
 ```
 
 ## Hierarchy Block Explanations
@@ -128,9 +125,9 @@ flowchart TD
 
 ### Data And Integrity Blocks
 
-- `MongoDB`: the operational database that stores products, certificates, users, and detailed traceability documents.
-- `File Storage`: the location where uploaded certificate files and other binary assets are persisted, either locally or in S3-compatible storage.
-- `Blockchain RPC`: the connection point the API uses to talk to an EVM network such as local Hardhat or a production RPC provider.
+- `MongoDB Atlas`: the cloud-hosted operational database that stores products, certificates, users, and detailed traceability documents.
+- `File Storage`: the location where uploaded certificate files and other binary assets are persisted on Railway.
+- `Blockchain RPC`: the connection point the API uses to talk to the Ethereum Sepolia testnet via the Alchemy node-as-a-service RPC provider.
 - `HalalCertificateRegistry`: the smart contract that stores certificate decision anchors and traceability hashes as tamper-resistant proofs.
 
 ### Shared And Infrastructure Blocks
@@ -138,14 +135,13 @@ flowchart TD
 - `packages/shared`: shared DTOs, enums, validation schemas, and common types used by the API, worker, and web app.
 - `packages/config`: centralized environment loading and validation so all services resolve configuration consistently.
 - `packages/contracts`: the Hardhat-based smart contract workspace that contains Solidity source, tests, deployment scripts, and contract tooling.
-- `infra/docker`: local infrastructure definitions used to run supporting services such as MongoDB during development.
 
 ## Ownership By Block
 
 - `apps/web` owns user interaction for internal operations and public verification lookup.
 - `apps/api` is the system orchestrator. It owns authentication, validation, Mongo persistence, file handling, QR/verification responses, and blockchain writes.
 - `apps/worker` owns asynchronous certificate processing after upload. It moves pending certificates through the AI review stage.
-- `MongoDB` is the operational system of record for products, users, certificates, and full traceability records.
+- `MongoDB Atlas` is the operational system of record for products, users, certificates, and full traceability records.
 - `File Storage` holds uploaded certificate files and other binary assets.
 - `Blockchain` holds tamper-resistant anchors for approved certificate decisions and traceability hashes.
 
@@ -163,9 +159,9 @@ Implementation rule:
 1. Internal user creates a product.
 2. Manufacturer uploads a halal certificate.
 3. API stores the file and certificate metadata with `PENDING_AI`.
-4. Worker processes pending certificates and sets AI verdict, score, and reasoning.
+4. AI service (GPT-4o Vision) processes the certificate and sets AI verdict, score, and reasoning.
 5. Authority approves or rejects the certificate.
-6. API records the final certificate decision on-chain.
+6. API records the final certificate decision on-chain via Alchemy to Ethereum Sepolia.
 7. API records traceability anchors on-chain when trace steps are created.
 8. Public verification endpoint exposes product, certificate, traceability, and blockchain status.
 
@@ -185,6 +181,7 @@ Off-chain:
 
 ## Reasoning
 
-- MongoDB remains the practical operational database because the system needs queryable mutable business data.
+- MongoDB Atlas remains the practical operational database because the system needs queryable mutable business data.
 - Blockchain is used as an integrity layer, not as the full application database.
 - The worker is separated so OCR and AI verification do not block synchronous user requests.
+- All three services (API, worker, web) are deployed independently on Railway cloud hosting.
