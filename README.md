@@ -121,7 +121,8 @@ blockchain/
 │   ├── config/       # Environment parsing
 │   └── contracts/    # Hardhat + Solidity smart contract
 ├── Smart Contracts/  # Deployed contract source
-└── docs/             # Architecture documentation
+├── docs/             # Architecture documentation
+└── infra/docker/     # Local Docker support (MongoDB only)
 ```
 
 ---
@@ -160,12 +161,5 @@ BOOTSTRAP_ADMIN_PASSWORD
 
 ---
 
-## Research Paper
 
-This system was designed, implemented, and validated as part of a published capstone paper:
-
-> **Blockchain-based Halal Food Supply Chain for Kuwait's Imports**
-> Bedour Mahdi, Khairah AlRasheedi, Lama AlMusairiei, Noor Boshehri, Sarah Alhajri, Ajla Kulaglic
-> American University of the Middle East, Computer Engineering Department, Kuwait
-
----
+>
